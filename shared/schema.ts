@@ -27,6 +27,7 @@ export const users = pgTable("users", {
   phone: text("phone"),
   role: userRoleEnum("role").notNull().default("customer"),
   isEmailVerified: boolean("is_email_verified").notNull().default(false),
+  isBanned: boolean("is_banned").notNull().default(false),
   emailVerificationOtp: text("email_verification_otp"),
   otpExpiresAt: timestamp("otp_expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -101,8 +102,11 @@ export const notifications = pgTable("notifications", {
   userId: text("user_id").notNull().references(() => users.id),
   title: text("title").notNull(),
   message: text("message").notNull(),
-  type: text("type").notNull(),
+  type: text("type").notNull(), // info, success, warning, error, rental, availability
   isRead: boolean("is_read").notNull().default(false),
+  relatedEntityId: text("related_entity_id"), // Order ID or Product ID
+  relatedEntityType: text("related_entity_type"), // 'order' or 'product'
+  metadata: text("metadata"), // JSON string for additional data
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
