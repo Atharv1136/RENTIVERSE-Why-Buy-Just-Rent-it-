@@ -1,21 +1,39 @@
-# RENTIVERSE-Why-Buy-Just-Rent-it-
-Team No:- 77
+# RENTIVERSE – Why Buy? Just Rent it!
+**Team No:** 77
 
-Rentiverse is a rental management platform enabling users to register, browse, and rent products, while admins manage orders, track statuses, generate reports, and streamline rental operations.
+---
 
-Tech Stack :-
+## 📌 Overview
+**Rentiverse** is a rental management platform that enables:
 
-Frontend :- 
-React 18 - Modern UI library with hooks and functional components
+- **Users** to register, browse, and rent products.
+- **Admins** to manage orders, track statuses, generate reports, and streamline rental operations.
 
-TypeScript -Type safety and better development experience
+---
 
-Tailwind CSS - Utility-first CSS framework for styling
+## 🛠 Tech Stack
 
-Backend:-
-Express.js - Fast web framework for Node.js
+### **Frontend**
+- **React 18** – Modern UI library with hooks and functional components
+- **TypeScript** – Type safety and better development experience
+- **Tailwind CSS** – Utility-first CSS framework for styling
 
-TypeScript - Full-stack type safety
+### **Backend**
+- **Express.js** – Fast web framework for Node.js
+- **TypeScript** – Full-stack type safety
 
-Database :-
-Supabase PostgreSQL - Cloud-hosted PostgreSQL database
+### **Database**
+- **Supabase PostgreSQL** – Cloud-hosted PostgreSQL database
+
+---
+
+## 🚀 Features
+- User registration & authentication
+- Product browsing & rental requests
+- Admin order management
+- Status tracking & reporting
+- Streamlined rental operations
+
+---
+
+## 📂 Project Structure
