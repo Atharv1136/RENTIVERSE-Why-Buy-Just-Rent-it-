@@ -6,6 +6,7 @@ import {
   OrderItem,
   Payment,
   Notification,
+  Review,
   InsertUser,
   InsertCategory,
   InsertProduct,
@@ -13,6 +14,7 @@ import {
   InsertOrderItem,
   InsertPayment,
   InsertNotification,
+  InsertReview,
 } from "@shared/schema";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -31,6 +33,7 @@ export class MemoryStorage implements IStorage {
   private orderItems: Map<string, OrderItem> = new Map();
   private payments: Map<string, Payment> = new Map();
   private notifications: Map<string, Notification> = new Map();
+  private reviews: Map<string, Review> = new Map();
 
   constructor() {
     this.sessionStore = new MemSessionStore({
@@ -408,5 +411,171 @@ export class MemoryStorage implements IStorage {
       totalProducts,
       totalCustomers,
     };
+  }
+
+  // Reviews methods
+  async createReview(reviewData: InsertReview): Promise<Review> {
+    const id = nanoid();
+    const review: Review = {
+      id,
+      ...reviewData,
+      createdAt: new Date()
+    };
+    this.reviews.set(id, review);
+    return review;
+  }
+
+  async getProductReviews(productId: string): Promise<Review[]> {
+    return Array.from(this.reviews.values())
+      .filter(r => r.productId === productId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async deleteReview(id: string): Promise<void> {
+    this.reviews.delete(id);
+  }
+
+  // Admin methods
+  async getAllUsers(filters?: {
+    role?: string;
+    isBanned?: boolean;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }> {
+    let userList = Array.from(this.users.values());
+    
+    if (filters?.role) {
+      userList = userList.filter(u => u.role === filters.role);
+    }
+    
+    if (filters?.isBanned !== undefined) {
+      userList = userList.filter(u => u.isBanned === filters.isBanned);
+    }
+    
+    if (filters?.search) {
+      const searchTerm = filters.search.toLowerCase();
+      userList = userList.filter(u => 
+        u.fullName.toLowerCase().includes(searchTerm) ||
+        u.email.toLowerCase().includes(searchTerm) ||
+        u.username.toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    const total = userList.length;
+    
+    if (filters?.offset) {
+      userList = userList.slice(filters.offset);
+    }
+    
+    if (filters?.limit) {
+      userList = userList.slice(0, filters.limit);
+    }
+    
+    return { users: userList, total };
+  }
+
+  async banUser(userId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, isBanned: true };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async unbanUser(userId: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { ...user, isBanned: false };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+
+  async getAdminStats(): Promise<{
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+    recentUsers: User[];
+    recentOrders: Order[];
+  }> {
+    const totalUsers = this.users.size;
+    const totalProducts = this.products.size;
+    const totalOrders = this.orders.size;
+    
+    const completedOrders = Array.from(this.orders.values()).filter(o => o.status === 'completed');
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + parseFloat(order.total.toString()), 0);
+    
+    const recentUsers = Array.from(this.users.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 5);
+    
+    const recentOrders = Array.from(this.orders.values())
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 5);
+    
+    return {
+      totalUsers,
+      totalProducts,
+      totalOrders,
+      totalRevenue,
+      recentUsers,
+      recentOrders
+    };
+  }
+
+  async getAllOrdersAdmin(filters?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ orders: Order[]; total: number }> {
+    let orderList = Array.from(this.orders.values());
+    
+    if (filters?.status) {
+      orderList = orderList.filter(o => o.status === filters.status);
+    }
+    
+    const total = orderList.length;
+    
+    if (filters?.offset) {
+      orderList = orderList.slice(filters.offset);
+    }
+    
+    if (filters?.limit) {
+      orderList = orderList.slice(0, filters.limit);
+    }
+    
+    return { orders: orderList, total };
+  }
+
+  async getAllProductsAdmin(filters?: {
+    categoryId?: string;
+    createdBy?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ products: Product[]; total: number }> {
+    let productList = Array.from(this.products.values());
+    
+    if (filters?.categoryId) {
+      productList = productList.filter(p => p.categoryId === filters.categoryId);
+    }
+    
+    if (filters?.createdBy) {
+      productList = productList.filter(p => p.createdBy === filters.createdBy);
+    }
+    
+    const total = productList.length;
+    
+    if (filters?.offset) {
+      productList = productList.slice(filters.offset);
+    }
+    
+    if (filters?.limit) {
+      productList = productList.slice(0, filters.limit);
+    }
+    
+    return { products: productList, total };
   }
 }
