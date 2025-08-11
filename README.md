@@ -13,11 +13,9 @@ TypeScript -Type safety and better development experience
 Tailwind CSS - Utility-first CSS framework for styling
 
 Backend:-
-
 Express.js - Fast web framework for Node.js
 
 TypeScript - Full-stack type safety
 
 Database :-
-
 Supabase PostgreSQL - Cloud-hosted PostgreSQL database
