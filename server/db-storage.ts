@@ -20,9 +20,12 @@ import {
   orders,
   orderItems,
   payments,
-  notifications
+  notifications,
+  reviews,
+  Review,
+  InsertReview
 } from "@shared/schema";
-import { eq, desc, count, ilike, and, sql } from "drizzle-orm";
+import { eq, desc, count, ilike, and, sql, or, sum } from "drizzle-orm";
 import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
 import { generateOtp, sendOtpEmail, sendWelcomeEmail } from "./email-service";
@@ -123,6 +126,7 @@ export class DatabaseStorage implements IStorage {
     const [productResults, totalResults] = await Promise.all([
       db.select()
         .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
         .where(whereClause)
         .orderBy(desc(products.createdAt))
         .limit(limit)
@@ -133,7 +137,10 @@ export class DatabaseStorage implements IStorage {
     ]);
 
     return {
-      products: productResults,
+      products: productResults.map(row => ({
+        ...row.products,
+        categoryName: row.categories?.name || 'Uncategorized'
+      })),
       total: totalResults[0].count as number
     };
   }
@@ -303,6 +310,295 @@ export class DatabaseStorage implements IStorage {
       activeRentals: activeRentalsResult[0].count as number,
       totalProducts: productsResult[0].count as number,
       totalCustomers: customersResult[0].count as number,
+    };
+  }
+
+  // Reviews methods
+  async createReview(reviewData: InsertReview): Promise<Review> {
+    const result = await db.insert(reviews).values(reviewData).returning();
+    return result[0];
+  }
+
+  async getProductReviews(productId: string): Promise<Review[]> {
+    return await db.select({
+      id: reviews.id,
+      userId: reviews.userId,
+      productId: reviews.productId,
+      rating: reviews.rating,
+      comment: reviews.comment,
+      createdAt: reviews.createdAt,
+      userName: users.username,
+      userFullName: users.fullName
+    })
+    .from(reviews)
+    .leftJoin(users, eq(reviews.userId, users.id))
+    .where(eq(reviews.productId, productId))
+    .orderBy(desc(reviews.createdAt));
+  }
+
+  async deleteReview(id: string): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  // Admin methods
+  async getAllUsers(filters?: {
+    role?: string;
+    isBanned?: boolean;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ users: User[]; total: number }> {
+    let query = db.select().from(users);
+    let countQuery = db.select({ count: count() }).from(users);
+    
+    const conditions = [];
+    
+    if (filters?.role) {
+      conditions.push(eq(users.role, filters.role as any));
+    }
+    
+    if (filters?.isBanned !== undefined) {
+      conditions.push(eq(users.isBanned, filters.isBanned));
+    }
+    
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
+      conditions.push(
+        or(
+          ilike(users.fullName, searchTerm),
+          ilike(users.email, searchTerm),
+          ilike(users.username, searchTerm)
+        )
+      );
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+    
+    query = query.orderBy(desc(users.createdAt));
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    const [usersResult, totalResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
+    
+    return {
+      users: usersResult,
+      total: totalResult[0].count as number
+    };
+  }
+
+  async banUser(userId: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ isBanned: true })
+      .where(eq(users.id, userId))
+      .returning();
+    return result[0];
+  }
+
+  async unbanUser(userId: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({ isBanned: false })
+      .where(eq(users.id, userId))
+      .returning();
+    return result[0];
+  }
+
+  async getCustomerDashboardStats(customerId: string): Promise<{
+    totalOrders: number;
+    activeRentals: number;
+    totalSpent: number;
+    totalRevenue: number;
+  }> {
+    const [
+      ordersCountResult,
+      activeRentalsResult,
+      totalSpentResult
+    ] = await Promise.all([
+      db.select({ count: count() }).from(orders).where(eq(orders.customerId, customerId)),
+      db.select({ count: count() })
+        .from(orders)
+        .where(and(
+          eq(orders.customerId, customerId),
+          eq(orders.status, 'confirmed')
+        )),
+      db.select({ total: sum(orders.total) })
+        .from(orders)
+        .where(and(
+          eq(orders.customerId, customerId),
+          eq(orders.status, 'completed')
+        ))
+    ]);
+
+    const totalSpent = parseFloat(totalSpentResult[0].total?.toString() || '0');
+
+    return {
+      totalOrders: ordersCountResult[0].count as number,
+      activeRentals: activeRentalsResult[0].count as number,
+      totalSpent,
+      totalRevenue: totalSpent
+    };
+  }
+
+  async getAdminStats(): Promise<{
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalRevenue: number;
+    recentUsers: User[];
+    recentOrders: Order[];
+  }> {
+    const [
+      usersCountResult,
+      productsCountResult,
+      ordersCountResult,
+      revenueResult,
+      recentUsersResult,
+      recentOrdersResult
+    ] = await Promise.all([
+      db.select({ count: count() }).from(users),
+      db.select({ count: count() }).from(products),
+      db.select({ count: count() }).from(orders),
+      db.select({ total: sum(orders.total) }).from(orders).where(eq(orders.status, 'completed')),
+      db.select().from(users).orderBy(desc(users.createdAt)).limit(5),
+      db.select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        total: orders.total,
+        status: orders.status,
+        createdAt: orders.createdAt,
+        customerName: users.fullName,
+        customerEmail: users.email
+      })
+      .from(orders)
+      .leftJoin(users, eq(orders.customerId, users.id))
+      .orderBy(desc(orders.createdAt))
+      .limit(5)
+    ]);
+
+    return {
+      totalUsers: usersCountResult[0].count as number,
+      totalProducts: productsCountResult[0].count as number,
+      totalOrders: ordersCountResult[0].count as number,
+      totalRevenue: parseFloat(revenueResult[0].total?.toString() || '0'),
+      recentUsers: recentUsersResult,
+      recentOrders: recentOrdersResult
+    };
+  }
+
+  async getAllOrdersAdmin(filters?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ orders: Order[]; total: number }> {
+    let query = db.select({
+      id: orders.id,
+      orderNumber: orders.orderNumber,
+      customerId: orders.customerId,
+      total: orders.total,
+      status: orders.status,
+      createdAt: orders.createdAt,
+      customerName: users.fullName,
+      customerEmail: users.email
+    }).from(orders).leftJoin(users, eq(orders.customerId, users.id));
+    
+    let countQuery = db.select({ count: count() }).from(orders);
+    
+    if (filters?.status) {
+      query = query.where(eq(orders.status, filters.status as any));
+      countQuery = countQuery.where(eq(orders.status, filters.status as any));
+    }
+    
+    query = query.orderBy(desc(orders.createdAt));
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    const [ordersResult, totalResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
+    
+    return {
+      orders: ordersResult as any,
+      total: totalResult[0].count as number
+    };
+  }
+
+  async getAllProductsAdmin(filters?: {
+    categoryId?: string;
+    createdBy?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<{ products: Product[]; total: number }> {
+    let query = db.select({
+      id: products.id,
+      name: products.name,
+      categoryId: products.categoryId,
+      basePrice: products.basePrice,
+      availableUnits: products.availableUnits,
+      rentalDuration: products.rentalDuration,
+      location: products.location,
+      isActive: products.isActive,
+      createdBy: products.createdBy,
+      createdAt: products.createdAt,
+      categoryName: categories.name,
+      createdByName: users.fullName
+    })
+    .from(products)
+    .leftJoin(categories, eq(products.categoryId, categories.id))
+    .leftJoin(users, eq(products.createdBy, users.id));
+    
+    let countQuery = db.select({ count: count() }).from(products);
+    
+    const conditions = [];
+    
+    if (filters?.categoryId) {
+      conditions.push(eq(products.categoryId, filters.categoryId));
+    }
+    
+    if (filters?.createdBy) {
+      conditions.push(eq(products.createdBy, filters.createdBy));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+      countQuery = countQuery.where(and(...conditions));
+    }
+    
+    query = query.orderBy(desc(products.createdAt));
+    
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    const [productsResult, totalResult] = await Promise.all([
+      query,
+      countQuery
+    ]);
+    
+    return {
+      products: productsResult as any,
+      total: totalResult[0].count as number
     };
   }
 }
