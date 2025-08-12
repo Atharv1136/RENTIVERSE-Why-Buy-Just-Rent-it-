@@ -1,4 +1,34 @@
-onnection string: `postgresql://username:password@localhost:5432/rentiverse`
+
+# 🏠 Rentiverse - Rental Management System
+
+**Team No: 77** 👥
+
+A comprehensive rental management web application built with React, TypeScript, Express.js, and PostgreSQL. 🚀
+
+## ⚡ Quick Start
+
+### 📋 Prerequisites
+- Node.js 18+ 📦
+- PostgreSQL database (local or cloud) 🗄️
+
+### 🛠️ Local Development Setup
+
+1. **📥 Clone and Install**
+   ```bash
+   npm install
+   ```
+
+2. **🗄️ Database Setup**
+   
+   **Option A: Neon DB (Recommended)** ⭐
+   - Sign up at [neon.tech](https://neon.tech)
+   - Create a new project
+   - Copy the connection string
+   
+   **Option B: Local PostgreSQL** 💻
+   - Install PostgreSQL locally
+   - Create a database named `rentiverse`
+   - Use connection string: `postgresql://username:password@localhost:5432/rentiverse`
 
 3. **⚙️ Environment Configuration**
    ```bash
