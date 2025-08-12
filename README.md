@@ -3,6 +3,26 @@
 
 **Team No: 77** 👥
 
+
+## 👨‍💻 Team Members
+
+## 👨‍💻 Team Members
+
+## 👨‍💻 Team Members
+
+| Name            | Role                           |
+|-----------------|--------------------------------|
+| Atharva Bhosale | Frontend Developer             |
+| Darshan Patil   | Frontend Developer + Documentation |
+| Prachi Bhagat   | Backend Developer              |
+| Sneha Chavan    | Backend Developer              |
+
+
+
+
+
+
+
 A comprehensive rental management web application built with React, TypeScript, Express.js, and PostgreSQL. 🚀
 
 ## ⚡ Quick Start
