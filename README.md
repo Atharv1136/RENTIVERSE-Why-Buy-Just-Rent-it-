@@ -99,3 +99,5 @@ The application will be available at http://localhost:5000 🌐
 - **Payments**: Razorpay integration 💳
 ---
 
+## 🌐 Live Demo
+[Rentiverse Live](https://rentiverse.replit.app)
