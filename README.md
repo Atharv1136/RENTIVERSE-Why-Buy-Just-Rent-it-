@@ -1,35 +1,6 @@
-# Rentiverse - Rental Management System
+onnection string: `postgresql://username:password@localhost:5432/rentiverse`
 
-Team No :- 77
-
-A comprehensive rental management web application built with React, TypeScript, Express.js, and PostgreSQL.
-
-## Quick Start
-
-### Prerequisites
-- Node.js 18+ 
-- PostgreSQL database (local or cloud)
-
-### Local Development Setup
-
-1. **Clone and Install**
-   ```bash
-   npm install
-   ```
-
-2. **Database Setup**
-   
-   **Option A: Neon DB (Recommended)**
-   - Sign up at [neon.tech](https://neon.tech)
-   - Create a new project
-   - Copy the connection string
-   
-   **Option B: Local PostgreSQL**
-   - Install PostgreSQL locally
-   - Create a database named `rentiverse`
-   - Use connection string: `postgresql://username:password@localhost:5432/rentiverse`
-
-3. **Environment Configuration**
+3. **⚙️ Environment Configuration**
    ```bash
    # Copy the example file
    cp .env.example .env
@@ -39,51 +10,51 @@ A comprehensive rental management web application built with React, TypeScript, 
    SESSION_SECRET=your_secret_key
    ```
 
-4. **Database Migration**
+4. **🔄 Database Migration**
    ```bash
    npm run db:push
    ```
 
-5. **Start Development Server**
+5. **🚀 Start Development Server**
    ```bash
    npm run dev
    ```
 
-The application will be available at http://localhost:5000
+The application will be available at http://localhost:5000 🌐
 
-## Environment Variables
+## 🔧 Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
-| `SESSION_SECRET` | Secret key for sessions | Yes |
-| `EMAIL_USER` | Gmail address for OTP emails | No |
-| `EMAIL_PASSWORD` | Gmail app password | No |
-| `RAZORPAY_KEY_ID` | Razorpay API key | No |
-| `RAZORPAY_KEY_SECRET` | Razorpay secret key | No |
+| `DATABASE_URL` | PostgreSQL connection string | ✅ Yes |
+| `SESSION_SECRET` | Secret key for sessions | ✅ Yes |
+| `EMAIL_USER` | Gmail address for OTP emails | ❌ No |
+| `EMAIL_PASSWORD` | Gmail app password | ❌ No |
+| `RAZORPAY_KEY_ID` | Razorpay API key | ❌ No |
+| `RAZORPAY_KEY_SECRET` | Razorpay secret key | ❌ No |
 
-## Scripts
+## 📜 Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run db:push` - Push schema changes to database
-- `npm run check` - Type checking
+- `npm run dev` - Start development server 🔥
+- `npm run build` - Build for production 📦
+- `npm run start` - Start production server 🚀
+- `npm run db:push` - Push schema changes to database 🔄
+- `npm run check` - Type checking ✅
 
-## Features
+## ✨ Features
 
-- User authentication with email verification
-- Product catalog management
-- Order and rental tracking
-- Payment integration with Razorpay
-- Admin dashboard
-- Real-time notifications
+- 🔐 User authentication with email verification
+- 📦 Product catalog management
+- 📋 Order and rental tracking
+- 💳 Payment integration with Razorpay
+- 👨‍💼 Admin dashboard
+- 🔔 Real-time notifications
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-- **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui
-- **Backend**: Express.js, TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Passport.js with sessions
-- **Payments**: Razorpay integration
-- **Email**: Nodemailer for OTP verification
+- **Frontend**: React 18, TypeScript, Tailwind CSS, shadcn/ui ⚛️
+- **Backend**: Express.js, TypeScript 🖥️
+- **Database**: PostgreSQL with Drizzle ORM 🗄️
+- **Authentication**: Passport.js with sessions 🔐
+- **Payments**: Razorpay integration 💳
+- **Email**: Nodemailer for OTP verification 📧
