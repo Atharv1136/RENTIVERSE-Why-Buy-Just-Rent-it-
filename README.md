@@ -87,4 +87,5 @@ The application will be available at http://localhost:5000 🌐
 - **Database**: PostgreSQL with Drizzle ORM 🗄️
 - **Authentication**: Passport.js with sessions 🔐
 - **Payments**: Razorpay integration 💳
-- **Email**: Nodemailer for OTP verification 📧
+---
+
